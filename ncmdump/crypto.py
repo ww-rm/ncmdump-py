@@ -39,6 +39,9 @@ class NCMRC4:
 
         Args:
             ciphertext (bytes): btyes to be decrypted
+
+        Returns:
+            bytes: plaintext
         """
 
         plaintext = bytearray()
@@ -66,6 +69,15 @@ class NCMAES:
         self._cryptor = AES.new(self._key, AES.MODE_ECB)
 
     def decrypt(self, ciphertext: bytes) -> bytes:
+        """decrypt
+
+        Args:
+            ciphertext (bytes): btyes to be decrypted
+
+        Returns:
+            bytes: plaintext
+        """
+
         return self._cryptor.decrypt(ciphertext)
 
     def unpad(self, padded_data: bytes) -> bytes:

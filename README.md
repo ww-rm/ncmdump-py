@@ -4,7 +4,7 @@ A simple package used to dump ncm files to mp3 or flac files, it can:
 
 - Decrypt and dump `.ncm` files.
 - Auto add album and cover info into `.mp3` or `.flac` files.
-- Auto try download cover image when there is no cover data in ncm files.
+- Auto try download cover image when there is no cover data in `.ncm` files.
 
 ## Install
 

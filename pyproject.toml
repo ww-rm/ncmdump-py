@@ -7,7 +7,7 @@ name = "ncmdump-py"
 authors = [
     {name = "ww-rm", email = "ww-rm@qq.com"},
 ]
-description = "A simple package used to dump ncm files to mp3 or flac files."
+description = "Dump ncm files to mp3 or flac files."
 requires-python = ">=3.7"
 dependencies = [
     "mutagen",

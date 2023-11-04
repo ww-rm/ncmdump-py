@@ -96,8 +96,8 @@ class NeteaseCloudMusicFile:
             self._metadata = {}
 
             # XXX: 9 bytes unknown
-            self._gap2 = ncmfile.read(5)
             self._crc32 = int.from_bytes(ncmfile.read(4), "little")
+            self._gap2 = ncmfile.read(5)
 
             self._cover_data_size = int.from_bytes(ncmfile.read(4), "little")
             self._cover_data = ncmfile.read(self._cover_data_size)
