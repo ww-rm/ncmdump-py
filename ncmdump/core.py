@@ -18,6 +18,136 @@ from ncmdump import crypto
 __all__ = ["NeteaseCloudMusicFile"]
 
 
+class MusicMetadata:
+    """Metadata for music"""
+
+    def __init__(self, data: dict = None) -> None:
+        self._data = data or {}
+
+    @property
+    def json(self) -> dict:
+        return self._data
+
+    @property
+    def format(self) -> str:
+        return self._data.get("format", "mp3")
+
+    @property
+    def id(self) -> int:
+        return self._data.get("musicId", -1)
+
+    @property
+    def name(self) -> str:
+        return self._data.get("musicName", "Unknown")
+
+    @property
+    def artists(self) -> List[str]:
+        return [a[0] for a in self._data.get("artist", [])]
+
+    @property
+    def album(self) -> str:
+        return self._data.get("alnum", "Unknown")
+
+    @property
+    def cover_url(self) -> str:
+        return self._data.get("albumPic", "http://p3.music.126.net/tBTNafgjNnTL1KlZMt7lVA==/18885211718935735.jpg")
+
+
+class Metadata:
+    """Metadata for ncm file.
+
+    `music`:
+
+    ```json
+    {
+        "format": "flac", 
+        "musicId": 431259256, 
+        "musicName": "カタオモイ", 
+        "artist": [["Aimer", 16152]], 
+        "album": "daydream", 
+        "albumId": 34826361, 
+        "albumPicDocId": 109951165052089697, 
+        "albumPic": "http://p1.music.126.net/2QRYxUqXfW0zQpm2_DVYRA==/109951165052089697.jpg", 
+        "mvId": 0, 
+        "flag": 4, 
+        "bitrate": 876923, 
+        "duration": 207866, 
+        "alias": [], 
+        "transNames": ["单相思"]
+    }
+    ```
+
+    `dj`:
+
+    ```json
+    {
+        "programId": 2506516081,
+        "programName": "03 踏遍万水千山",
+        "mainMusic": {
+            "musicId": 1957438579,
+            "musicName": "03 踏遍万水千山",
+            "artist": [],
+            "album": "[DJ节目]北方文艺出版社的DJ节目 第8期",
+            "albumId": 0,
+            "albumPicDocId": 109951167551086981,
+            "albumPic": "https://p1.music.126.net/M48NPuT591tIqqUdQyKZlg==/109951167551086981.jpg",
+            "mvId": 0,
+            "flag": 0,
+            "bitrate": 320000,
+            "duration": 1222948,
+            "alias": [],
+            "transNames": []
+        },
+        "djId": 7891086863,
+        "djName": "北方文艺出版社",
+        "djAvatarUrl": "http://p1.music.126.net/DQr2q_S23tYY8vU_C-kAYw==/109951167535553901.jpg",
+        "createTime": 1655691020376,
+        "brand": "林徽因传：倾我所能去坚强",
+        "serial": 3,
+        "programDesc": "这是一本有温度、有态度的传记，记录了真正意义上的民国女神——林徽因，从容坚强、传奇丰沛的一生。",
+        "programFeeType": 15,
+        "programBuyed": true,
+        "radioId": 977264730,
+        "radioName": "林徽因传：倾我所能去坚强",
+        "radioCategory": "文学出版",
+        "radioCategoryId": 3148096,
+        "radioDesc": "这是一本有温度、有态度的传记，记录了真正意义上的民国女神——林徽因，从容坚强、传奇丰沛的一生。",
+        "radioFeeType": 1,
+        "radioFeeScope": 0,
+        "radioBuyed": true,
+        "radioPrice": 30,
+        "radioPurchaseCount": 0
+    }
+    ```
+
+    """
+
+    def __init__(self, metadata: bytes) -> None:
+        self._metadata = metadata or b"music:{}"
+
+        self._type = self._metadata[:self._metadata.index(b":")].decode()
+        self._data: dict = json.loads(self._metadata[self._metadata.index(b":") + 1:])
+
+        if self.type == "music":
+            self._music_metadata = MusicMetadata(self._data)
+        elif self.type == "dj":
+            self._music_metadata = MusicMetadata(self._data.get("mainMusic"))
+        else:
+            raise TypeError(f"Unknown metadata type: '{self.type}'")
+
+    @property
+    def type(self) -> str:
+        return self._type
+
+    @property
+    def json(self) -> dict:
+        return self._data
+
+    @property
+    def music_metadata(self) -> MusicMetadata:
+        return self._music_metadata
+
+
 class NeteaseCloudMusicFile:
     """ncm file"""
 
@@ -30,41 +160,20 @@ class NeteaseCloudMusicFile:
     METADATA_XORBYTE = 0x63
 
     @property
-    def metadata(self) -> dict:
-        return self._metadata
+    def has_metadata(self) -> bool:
+        return self._metadata_enc_size > 0
 
     @property
-    def file_type(self) -> str:
-        """`flac` or `mp3`"""
-        return self._metadata.get("format", "")
+    def has_cover(self) -> bool:
+        return self._cover_data_size > 0
 
     @property
-    def id(self) -> int:
-        return self._metadata.get("musicId", -1)
-
-    @property
-    def name(self) -> str:
-        return self._metadata.get("musicName", "")
-
-    @property
-    def artists(self) -> List[str]:
-        return [a[0] for a in self._metadata.get("artist", [])]
-
-    @property
-    def album(self) -> str:
-        return self._metadata.get("album", "")
-
-    @property
-    def cover_data(self) -> bytes:
-        return self._cover_data
-
-    @property
-    def cover_suffix(self) -> str:
+    def _cover_suffix(self) -> str:
         return f".{imghdr.what(None, self._cover_data[:32])}"
 
     @property
-    def cover_mime(self) -> str:
-        return mimetypes.types_map.get(self.cover_suffix, "")
+    def _cover_mime(self) -> str:
+        return mimetypes.types_map.get(self._cover_suffix, "")
 
     def __init__(self, path: Union[str, PathLike]) -> None:
         """
@@ -93,7 +202,7 @@ class NeteaseCloudMusicFile:
 
             self._metadata_enc_size = int.from_bytes(ncmfile.read(4), "little")
             self._metadata_enc = ncmfile.read(self._metadata_enc_size)
-            self._metadata = {}
+            self._metadata = Metadata(b"")
 
             # XXX: 9 bytes unknown
             self._crc32 = int.from_bytes(ncmfile.read(4), "little")
@@ -121,33 +230,11 @@ class NeteaseCloudMusicFile:
     def _decrypt_metadata(self) -> None:
         """
         Attributes:
-            self._metadata: dict
-
-        ```json
-        {
-            "format": "flac", 
-            "musicId": 431259256, 
-            "musicName": "カタオモイ", 
-            "artist": [["Aimer", 16152]], 
-            "album": "daydream", 
-            "albumId": 34826361, 
-            "albumPicDocId": 109951165052089697, 
-            "albumPic": "http://p1.music.126.net/2QRYxUqXfW0zQpm2_DVYRA==/109951165052089697.jpg", 
-            "mvId": 0, 
-            "flag": 4, 
-            "bitrate": 876923, 
-            "duration": 207866, 
-            "alias": [], 
-            "transNames": ["单相思"]
-        }
-        ```
+            self._metadata: Metadata
         """
 
         # if no metadata
-        if self._metadata_enc_size <= 0:
-            self._metadata = {}
-
-        else:
+        if self._metadata_enc_size > 0:
             cryptor = crypto.NCMAES(self.AES_KEY_METADATA)
 
             metadata = bytes(map(lambda b: b ^ self.METADATA_XORBYTE, self._metadata_enc))
@@ -155,17 +242,7 @@ class NeteaseCloudMusicFile:
             metadata = b64decode(metadata[len(b"163 key(Don't modify):"):])
             metadata = cryptor.unpad(cryptor.decrypt(metadata))
 
-            self._metadata: dict = json.loads(metadata[len(b"music:"):])
-
-            # if no cover data, try get cover data by url in metadata
-            if self._cover_data_size <= 0:
-                try:
-                    with request.urlopen(self._metadata.get("albumPic", "")) as res:
-                        if res.status < 400:
-                            self._cover_data = res.read()
-                            self._cover_data_size = len(self._cover_data)
-                except:
-                    pass
+            self._metadata = Metadata(metadata)
 
     def _decrypt_music_data(self) -> None:
         """
@@ -175,6 +252,20 @@ class NeteaseCloudMusicFile:
 
         cryptor = crypto.NCMRC4(self._rc4_key)
         self._music_data = cryptor.decrypt(self._music_data_enc)
+
+    def _try_get_cover_data(self) -> int:
+        """If no cover data, try get cover data by url in metadata"""
+
+        if self._cover_data_size <= 0:
+            try:
+                with request.urlopen(self._metadata.music_metadata.cover_url) as res:
+                    if res.status < 400:
+                        self._cover_data = res.read()
+                        self._cover_data_size = len(self._cover_data)
+            except:
+                pass
+
+        return self._cover_data_size
 
     def decrypt(self) -> "NeteaseCloudMusicFile":
         """Decrypt all data.
@@ -186,6 +277,8 @@ class NeteaseCloudMusicFile:
         self._decrypt_rc4_key()
         self._decrypt_metadata()
         self._decrypt_music_data()
+
+        self._try_get_cover_data()
 
         return self
 
@@ -204,7 +297,7 @@ class NeteaseCloudMusicFile:
         path.parent.mkdir(parents=True, exist_ok=True)
 
         path = path.with_suffix(suffix)
-        path.write_text(json.dumps(self._metadata, ensure_ascii=False, indent=4), "utf8")
+        path.write_text(json.dumps(self._metadata.json, ensure_ascii=False, indent=4), "utf8")
         return path
 
     def dump_cover(self, path: Union[str, PathLike]) -> Path:
@@ -223,7 +316,7 @@ class NeteaseCloudMusicFile:
         path = Path(path)
         path.parent.mkdir(parents=True, exist_ok=True)
 
-        path = path.with_suffix(self.cover_suffix)
+        path = path.with_suffix(self._cover_suffix)
         path.write_bytes(self._cover_data)
         return path
 
@@ -233,7 +326,7 @@ class NeteaseCloudMusicFile:
         path = Path(path)
         path.parent.mkdir(parents=True, exist_ok=True)
 
-        path = path.with_suffix(f".{self.file_type}")
+        path = path.with_suffix(f".{self._metadata.music_metadata.format}")
         path.write_bytes(self._music_data)
         return path
 
@@ -242,13 +335,13 @@ class NeteaseCloudMusicFile:
 
         audio = mp3.MP3(path)
 
-        audio["TIT2"] = id3.TIT2(text=self.name, encoding=id3.Encoding.UTF8)  # title
-        audio["TALB"] = id3.TALB(text=self.album, encoding=id3.Encoding.UTF8)  # album
-        audio["TPE1"] = id3.TPE1(text="/".join(self.artists), encoding=id3.Encoding.UTF8)  # artists
-        audio["TPE2"] = id3.TPE2(text="/".join(self.artists), encoding=id3.Encoding.UTF8)  # album artists
+        audio["TIT2"] = id3.TIT2(text=self._metadata.music_metadata.name, encoding=id3.Encoding.UTF8)  # title
+        audio["TALB"] = id3.TALB(text=self._metadata.music_metadata.album, encoding=id3.Encoding.UTF8)  # album
+        audio["TPE1"] = id3.TPE1(text="/".join(self._metadata.music_metadata.artists), encoding=id3.Encoding.UTF8)  # artists
+        audio["TPE2"] = id3.TPE2(text="/".join(self._metadata.music_metadata.artists), encoding=id3.Encoding.UTF8)  # album artists
 
         if self._cover_data_size > 0:
-            audio["APIC"] = id3.APIC(type=id3.PictureType.COVER_FRONT, mime=self.cover_mime, data=self._cover_data)  # cover
+            audio["APIC"] = id3.APIC(type=id3.PictureType.COVER_FRONT, mime=self._cover_mime, data=self._cover_data)  # cover
 
         audio.save()
 
@@ -258,10 +351,10 @@ class NeteaseCloudMusicFile:
         audio = flac.FLAC(path)
 
         # add music info
-        audio["title"] = self.name
-        audio["artist"] = self.artists
-        audio["album"] = self.album
-        audio["albumartist"] = "/".join(self.artists)
+        audio["title"] = self._metadata.music_metadata.name
+        audio["artist"] = self._metadata.music_metadata.artists
+        audio["album"] = self._metadata.music_metadata.album
+        audio["albumartist"] = "/".join(self._metadata.music_metadata.artists)
 
         # add cover
         if self._cover_data_size > 0:
@@ -271,7 +364,7 @@ class NeteaseCloudMusicFile:
 
             with BytesIO(self._cover_data) as data:
                 with Image.open(data) as f:
-                    cover.mime = self.cover_mime
+                    cover.mime = self._cover_mime
                     cover.width = f.width
                     cover.height = f.height
                     cover.depth = len(f.getbands()) * 8
@@ -295,11 +388,11 @@ class NeteaseCloudMusicFile:
 
         path = self._dump_music(path)
 
-        if self.file_type == "flac":
+        if self._metadata.music_metadata.format == "flac":
             self._addinfo_flac(path)
-        elif self.file_type == "mp3":
+        elif self._metadata.music_metadata.format == "mp3":
             self._addinfo_mp3(path)
         else:
-            raise NotImplementedError(f"Unknown file type '{self.file_type}', failded to add music info.")
+            raise NotImplementedError(f"Unknown file type '{self._metadata.music_metadata.format}', failded to add music info.")
 
         return path

@@ -1,3 +1,4 @@
+import traceback
 from argparse import ArgumentParser
 from pathlib import Path
 
@@ -46,12 +47,12 @@ if __name__ == "__main__":
                         ncmfile.dump_cover(output_path)
 
                 except Exception as e:
-                    progress.log(f"[red]ERROR[/red]: {ncm_path} -> {e}")
+                    progress.log(f"[red]ERROR[/red]: {ncm_path} -> {traceback.format_exc()}")
 
                 else:
-                    if not ncmfile.metadata:
+                    if not ncmfile.has_metadata:
                         progress.log(f"[yellow]WARNING[/yellow]: {ncm_path} -> {music_path}, no metadata found")
-                    if not ncmfile.cover_data:
+                    if not ncmfile.has_cover:
                         progress.log(f"[yellow]WARNING[/yellow]: {ncm_path} -> {music_path}, no cover data found")
 
                 finally:
