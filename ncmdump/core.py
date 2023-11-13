@@ -116,7 +116,7 @@ class NeteaseCloudMusicFile:
         rc4_key = bytes(map(lambda b: b ^ self.RC4_KEY_XORBYTE, self._rc4_key_enc))
         rc4_key = cryptor.unpad(cryptor.decrypt(rc4_key))
 
-        self._rc4_key = rc4_key.lstrip(b"neteasecloudmusic")
+        self._rc4_key = rc4_key[len(b"neteasecloudmusic"):]
 
     def _decrypt_metadata(self) -> None:
         """
@@ -152,10 +152,10 @@ class NeteaseCloudMusicFile:
 
             metadata = bytes(map(lambda b: b ^ self.METADATA_XORBYTE, self._metadata_enc))
 
-            metadata = b64decode(metadata.lstrip(b"163 key(Don't modify):"))
+            metadata = b64decode(metadata[len(b"163 key(Don't modify):"):])
             metadata = cryptor.unpad(cryptor.decrypt(metadata))
 
-            self._metadata: dict = json.loads(metadata.lstrip(b"music:"))
+            self._metadata: dict = json.loads(metadata[len(b"music:"):])
 
             # if no cover data, try get cover data by url in metadata
             if self._cover_data_size <= 0:
