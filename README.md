@@ -52,3 +52,7 @@ ncmfile.dump_music("filename.mp3")  # auto detect correct suffix
 # ncmfile.dump_metadata("filename.json")  
 # ncmfile.dump_cover("filename.jpeg")
 ```
+
+---
+
+*If you think this project is helpful to you, :star: it and let more people see!*
