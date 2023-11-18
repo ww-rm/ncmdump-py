@@ -46,7 +46,7 @@ class MusicMetadata:
 
     @property
     def album(self) -> str:
-        return self._data.get("alnum", "Unknown")
+        return self._data.get("album", "Unknown")
 
     @property
     def cover_url(self) -> str:
