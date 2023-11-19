@@ -276,7 +276,6 @@ class NeteaseCloudMusicFile:
 
         self._decrypt_rc4_key()
         self._decrypt_metadata()
-        self._decrypt_music_data()
 
         self._try_get_cover_data()
 
@@ -322,6 +321,10 @@ class NeteaseCloudMusicFile:
 
     def _dump_music(self, path: Union[str, PathLike]) -> Path:
         """Dump music without any other info."""
+
+        # lazy decrypt
+        if not self._music_data:
+            self._decrypt_music_data()
 
         path = Path(path)
         path.parent.mkdir(parents=True, exist_ok=True)
