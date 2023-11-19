@@ -2,11 +2,21 @@ import traceback
 from argparse import ArgumentParser
 from pathlib import Path
 
-from rich.progress import Progress, SpinnerColumn, TimeElapsedColumn
+from rich.progress import (
+    BarColumn, 
+    Progress, 
+    SpinnerColumn,
+    TaskProgressColumn, 
+    TextColumn, 
+    TimeElapsedColumn,
+    TimeRemainingColumn,
+)
 
-from ncmdump import NeteaseCloudMusicFile
+from ncmdump import NeteaseCloudMusicFile, __version__
 
 if __name__ == "__main__":
+    print(f"ncmdump v{__version__}\n")
+    
     parser = ArgumentParser("ncmdump", description="Dump ncm files with progress bar and logging info, only process files with suffix '.ncm'")
     parser.add_argument("files", nargs="*", help="Files to dump, can follow multiple files.")
     parser.add_argument("--in-folder", help="Input folder of files to dump.")
@@ -31,7 +41,14 @@ if __name__ == "__main__":
     if not files:
         parser.print_help()
     else:
-        with Progress(SpinnerColumn(), *Progress.get_default_columns(), TimeElapsedColumn()) as progress:
+        with Progress(
+            SpinnerColumn(), 
+            TextColumn("[progress.description]{task.description}"),
+            BarColumn(),
+            TaskProgressColumn("[progress.percentage]{task.completed:d}/{task.total:d}"),
+            TimeRemainingColumn(), 
+            TimeElapsedColumn()
+        ) as progress:
             task = progress.add_task("[#d75f00]Dumping files", total=len(files))
 
             for ncm_path in files:
