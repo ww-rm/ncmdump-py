@@ -19,7 +19,7 @@ dynamic = ["version", "readme"]
 
 [project.urls]
 "Homepage" = "https://github.com/ww-rm/ncmdump-py"
-"Bug Tracker" = "https://github.com/ww-rm/ncmdump-py/issues"
+"Issues" = "https://github.com/ww-rm/ncmdump-py/issues"
 
 [tool.setuptools]
 packages = ["ncmdump"]
