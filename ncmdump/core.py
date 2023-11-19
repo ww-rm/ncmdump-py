@@ -24,6 +24,12 @@ class MusicMetadata:
     def __init__(self, data: dict = None) -> None:
         self._data = data or {}
 
+    def __repr__(self) -> str:
+        return self._data.__repr__()
+    
+    def __str__(self) -> str:
+        return self._data.__str__()
+
     @property
     def json(self) -> dict:
         return self._data
@@ -134,6 +140,12 @@ class Metadata:
             self._music_metadata = MusicMetadata(self._data.get("mainMusic"))
         else:
             raise TypeError(f"Unknown metadata type: '{self.type}'")
+        
+    def __repr__(self) -> str:
+        return self._data.__repr__()
+    
+    def __str__(self) -> str:
+        return self._data.__str__()
 
     @property
     def type(self) -> str:
