@@ -46,9 +46,11 @@ from ncmdump import NeteaseCloudMusicFile
 ncmfile = NeteaseCloudMusicFile("filename.ncm")
 ncmfile.decrypt()
 
+print(ncmfile.music_metadata)
+
 ncmfile.dump_music("filename.mp3")  # auto detect correct suffix
 
-# Maybe you need metadata or cover image
+# Maybe you also need dump metadata or cover image
 # ncmfile.dump_metadata("filename.json")  
 # ncmfile.dump_cover("filename.jpeg")
 ```
