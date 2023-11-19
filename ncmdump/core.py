@@ -15,7 +15,7 @@ from PIL import Image
 
 from ncmdump import crypto
 
-__all__ = ["NeteaseCloudMusicFile"]
+__all__ = ["NeteaseCloudMusicFile", "Metadata", "MusicMetadata"]
 
 
 class MusicMetadata:
@@ -122,7 +122,7 @@ class Metadata:
 
     """
 
-    def __init__(self, metadata: bytes) -> None:
+    def __init__(self, metadata: bytes = b"") -> None:
         self._metadata = metadata or b"music:{}"
 
         self._type = self._metadata[:self._metadata.index(b":")].decode()
@@ -166,6 +166,14 @@ class NeteaseCloudMusicFile:
     @property
     def has_cover(self) -> bool:
         return self._cover_data_size > 0
+    
+    @property
+    def metadata(self) -> Metadata:
+        return self._metadata
+    
+    @property
+    def music_metadata(self) -> MusicMetadata:
+        return self._metadata.music_metadata
 
     @property
     def _cover_suffix(self) -> str:
