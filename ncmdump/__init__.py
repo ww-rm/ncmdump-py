@@ -1,3 +1,3 @@
 from ncmdump.core import NeteaseCloudMusicFile
 
-__version__ = "1.1.2"
+__version__ = "1.1.3"
