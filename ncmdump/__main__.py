@@ -3,11 +3,11 @@ from argparse import ArgumentParser
 from pathlib import Path
 
 from rich.progress import (
-    BarColumn, 
-    Progress, 
+    BarColumn,
+    Progress,
     SpinnerColumn,
-    TaskProgressColumn, 
-    TextColumn, 
+    TaskProgressColumn,
+    TextColumn,
     TimeElapsedColumn,
     TimeRemainingColumn,
 )
@@ -16,7 +16,7 @@ from ncmdump import NeteaseCloudMusicFile, __version__
 
 if __name__ == "__main__":
     print(f"ncmdump v{__version__}\n")
-    
+
     parser = ArgumentParser("ncmdump", description="Dump ncm files with progress bar and logging info, only process files with suffix '.ncm'")
     parser.add_argument("files", nargs="*", help="Files to dump, can follow multiple files.")
     parser.add_argument("--in-folder", help="Input folder of files to dump.")
@@ -42,17 +42,17 @@ if __name__ == "__main__":
         parser.print_help()
     else:
         with Progress(
-            SpinnerColumn(), 
+            SpinnerColumn(),
             TextColumn("[progress.description]{task.description}"),
             BarColumn(),
             TaskProgressColumn("[progress.percentage]{task.completed:d}/{task.total:d}"),
-            TimeRemainingColumn(), 
+            TimeRemainingColumn(),
             TimeElapsedColumn()
         ) as progress:
             task = progress.add_task("[#d75f00]Dumping files", total=len(files))
 
             for ncm_path in files:
-                output_path = out_folder.joinpath(ncm_path.stem)
+                output_path = out_folder.joinpath(ncm_path.with_suffix(".mp3"))  # suffix will be corrected later
 
                 try:
                     ncmfile = NeteaseCloudMusicFile(ncm_path).decrypt()
