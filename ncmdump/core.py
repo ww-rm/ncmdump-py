@@ -14,6 +14,7 @@ from mutagen import flac, id3, mp3
 from PIL import Image
 
 from ncmdump import crypto
+from ncmdump.logger import logger
 
 __all__ = ["NeteaseCloudMusicFile", "Metadata", "MusicMetadata"]
 
@@ -26,7 +27,7 @@ class MusicMetadata:
 
     def __repr__(self) -> str:
         return self._data.__repr__()
-    
+
     def __str__(self) -> str:
         return self._data.__str__()
 
@@ -140,10 +141,10 @@ class Metadata:
             self._music_metadata = MusicMetadata(self._data.get("mainMusic"))
         else:
             raise TypeError(f"Unknown metadata type: '{self.type}'")
-        
+
     def __repr__(self) -> str:
         return self._data.__repr__()
-    
+
     def __str__(self) -> str:
         return self._data.__str__()
 
@@ -178,11 +179,11 @@ class NeteaseCloudMusicFile:
     @property
     def has_cover(self) -> bool:
         return self._cover_data_size > 0
-    
+
     @property
     def metadata(self) -> Metadata:
         return self._metadata
-    
+
     @property
     def music_metadata(self) -> MusicMetadata:
         return self._metadata.music_metadata
@@ -354,7 +355,7 @@ class NeteaseCloudMusicFile:
         return path
 
     def _addinfo_mp3(self, path: Union[str, PathLike]) -> None:
-        """Add info for mp3 format."""
+        """Add info for mp3 format, may raise exception."""
 
         audio = mp3.MP3(path)
 
@@ -369,7 +370,7 @@ class NeteaseCloudMusicFile:
         audio.save()
 
     def _addinfo_flac(self, path: Union[str, PathLike]) -> None:
-        """Add info for flac format."""
+        """Add info for flac format, may raise exception."""
 
         audio = flac.FLAC(path)
 
@@ -411,11 +412,15 @@ class NeteaseCloudMusicFile:
 
         path = self._dump_music(path)
 
-        if self._metadata.music_metadata.format == "flac":
-            self._addinfo_flac(path)
-        elif self._metadata.music_metadata.format == "mp3":
-            self._addinfo_mp3(path)
-        else:
-            raise NotImplementedError(f"Unknown file type '{self._metadata.music_metadata.format}', failded to add music info.")
+        try:
+
+            if self._metadata.music_metadata.format == "flac":
+                self._addinfo_flac(path)
+            elif self._metadata.music_metadata.format == "mp3":
+                self._addinfo_mp3(path)
+            else:
+                raise NotImplementedError(f"Unknown file type '{self._metadata.music_metadata.format}'")
+        except Exception as e:
+            logger.warning("Skipped adding music info for '%s', %s", path, e)
 
         return path

@@ -13,9 +13,10 @@ from rich.progress import (
 )
 
 from ncmdump import NeteaseCloudMusicFile, __version__
+from ncmdump.logger import console, logger
 
 if __name__ == "__main__":
-    print(f"ncmdump v{__version__}\n")
+    logger.info(f"ncmdump v{__version__}\n")
 
     parser = ArgumentParser("ncmdump", description="Dump ncm files with progress bar and logging info, only process files with suffix '.ncm'")
     parser.add_argument("files", nargs="*", help="Files to dump, can follow multiple files.")
@@ -47,7 +48,8 @@ if __name__ == "__main__":
             BarColumn(),
             TaskProgressColumn("[progress.percentage]{task.completed:d}/{task.total:d}"),
             TimeRemainingColumn(),
-            TimeElapsedColumn()
+            TimeElapsedColumn(),
+            console=console
         ) as progress:
             task = progress.add_task("[#d75f00]Dumping files", total=len(files))
 
@@ -64,13 +66,13 @@ if __name__ == "__main__":
                         ncmfile.dump_cover(output_path)
 
                 except Exception as e:
-                    progress.log(f"[red]ERROR[/red]: {ncm_path} -> {traceback.format_exc()}")
-
+                    logger.exception(e)
+                    logger.error(f"{ncm_path} -> {e}")
                 else:
                     if not ncmfile.has_metadata:
-                        progress.log(f"[yellow]WARNING[/yellow]: {ncm_path} -> {music_path}, no metadata found")
+                        logger.warning(f"{ncm_path} -> {music_path}, no metadata found")
                     if not ncmfile.has_cover:
-                        progress.log(f"[yellow]WARNING[/yellow]: {ncm_path} -> {music_path}, no cover data found")
+                        logger.warning(f"{ncm_path} -> {music_path}, no cover data found")
 
                 finally:
                     progress.advance(task)
